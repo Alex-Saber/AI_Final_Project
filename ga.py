@@ -1,21 +1,11 @@
 ''' CS 551 - AI, Winter 2020, PSU
-    Dawei Zhang (dz4@pdx.edu)
-    Feb 18, 2020
+    Alex Saber, Armando Lajara, Dawei Zhang
+    March 12, 2020
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-from abc import ABC, abstractmethod
-
-class ga_problems(ABC):
-    def __init__(self, sta_dim, act_dim, goal):
-        self.dim = sta_dim
-        self.act_dim = act_dim
-        self.goal = goal
-        super().__init__()
-
-    @abstractmethod
-    def fit_func(self, sol):
-        pass
+from ga_problem import ga_problems
+from lunar_lander import ga_lunar_lander_problem
 
 class eight_queen(ga_problems):
     def fit_func(self, sol):
@@ -32,9 +22,10 @@ class eight_queen(ga_problems):
 class genetic_agent:
     def __init__(self, problem, size, mut_pct, num_iter):
         self.size = size; self.dim = problem.dim; self.goal = problem.goal
-        self.arr = np.zeros((size, self.dim))
+        self.act_dim = problem.act_dim
+        self.arr = np.zeros((size, self.dim), dtype=np.int)
         for i in range(size):
-            self.arr[i,:] = np.random.choice(problem.act_dim, self.dim, replace = False)
+            self.arr[i,:] = np.random.choice(problem.act_dim, self.dim)
         self.fit_func = problem.fit_func # fitness function
         self.mutp = mut_pct; self.niter = num_iter
         self.scores = []
@@ -44,18 +35,31 @@ class genetic_agent:
         test = np.argmax(fit_score >= self.goal)
         self.scores.append(fit_score.max())
         if test: return self.arr[test]
-        # create lottery poll for selection
-        lottery_poll = []
-        for i, s in enumerate(fit_score): 
-            lottery_poll.extend([i for j in range(s)])
-        # select nodes to a new population based on probabilities
+
+        # # create lottery poll for selection
+        # lottery_poll = []
+        # for i, s in enumerate(fit_score): 
+        #     lottery_poll.extend([i for j in range(s)])
+        # # select nodes to a new population based on probabilities
+        # new_arr = np.zeros(self.arr.shape)
+        # for i in range(self.size):
+        #     if len(lottery_poll):
+        #         dice = np.random.randint(0, len(lottery_poll))
+        #         new_arr[i,:] = self.arr[lottery_poll[dice],:]
+        #     else:
+        #         new_arr[i,:] = self.arr[0,:]
+        # self.arr[:,:] = new_arr[:,:]
+
+        # select nodes to a new population based on fitness
+        top_n = self.size // 2 # TODO: better citizen didn't get more breed chance
+        top_n = top_n + 1 if top_n % 2 else top_n
+        order = np.argsort(fit_score)
         new_arr = np.zeros(self.arr.shape)
-        for i in range(self.size):
-            if len(lottery_poll):
-                dice = np.random.randint(0, len(lottery_poll))
-                new_arr[i,:] = self.arr[lottery_poll[dice],:]
-            else:
-                new_arr[i,:] = self.arr[0,:]
+        for i, p in enumerate(reversed(order)):
+            new_arr[i,:] = self.arr[p,:]
+            if i >= top_n: break
+        new_arr[top_n:,:] = new_arr[:top_n,:]
+        np.random.shuffle(new_arr)
         self.arr[:,:] = new_arr[:,:]
         # cross-over
         assert self.size % 2 == 0, "population size needs to be even"
@@ -67,30 +71,37 @@ class genetic_agent:
         for i in range(self.size):
             dice = np.random.rand() <= self.mutp
             if not dice: continue # lucky, no mutation
-            dice = np.random.randint(0, self.dim**2)
-            m, n, k = dice//self.dim, dice, (dice+1)
-            self.arr[i,m] = k if self.arr[i,m] == n else n
-            # self.arr[i,m] = np.random.randint(0, self.dim)
+            dice1 = np.random.randint(0, self.dim)
+            dice2 = np.random.randint(0, self.act_dim)
+            n, k = dice2, (dice2+1)%self.act_dim
+            self.arr[i,dice1] = k if self.arr[i,dice1] == n else n
         return []
 
     def evolve(self):
+        last_p = 0
         for i in range(self.niter):
             result = self.next_gen()
             if len(result): return i, result
+            p = i*100//self.niter
+            if p != last_p:
+                if p % 10 == 0: print(f"{p}", end='')
+                else: print(".", end='')
+                last_p = p
+        print("")
         return None, None
 
     
 if __name__ == '__main__':
-    PopulationSize = [4, 20, 150, 500, 800]
+    PopulationSize = [12, 20, 150, 500, 800]
     MutationPct = [0.4, 0.5, 0.9]
-    NumIterations = [200, 1000, 4000]
+    NumIterations = [200, 800]
     # PopulationSize = [100, 1000]
     # MutationPct = [0.5]
     # NumIterations = [200, 1000]
     dim = 8
-    problem = eight_queen(dim, dim**2, (dim-1)*dim//2)
+    #problem = eight_queen(dim, dim**2, (dim-1)*dim//2)
     # for lunar lander
-    # problem = lunar_lander(38400, 4, 280) # string length (state space), action range, target score (total rewards)
+    problem = ga_lunar_lander_problem(38400, 4, 250) # string length (state space), action range, target score (total rewards)
     for psz in PopulationSize:
         for mpt in MutationPct:
             for nit in NumIterations:
@@ -98,9 +109,10 @@ if __name__ == '__main__':
                 agent = genetic_agent(problem, psz, mpt, nit)
                 print(agent.arr[0])
                 idx, sol = agent.evolve()
-                #print("    scores = {0}".format(agent.scores))
+                print("    scores = {0}".format(max(agent.scores)))
                 if idx:
                     print("    at iter [{0}] found solution {1}".format(idx, sol))
                     print("    scores = {0}".format(agent.scores))
                     plt.plot(agent.scores)
                     plt.show()
+                    problem.fit_func(sol, True)

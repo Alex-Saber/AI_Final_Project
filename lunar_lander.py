@@ -413,6 +413,67 @@ def demo_heuristic_lander(env, seed=None, render=False):
         if done: break
     return total_reward
 
+from ga_problem import ga_problems
+
+class ga_lunar_lander_problem(ga_problems):
+    def __init__(self, sta_dim, act_dim, goal):
+        self.lander = LunarLander()
+        # states division: 5, 5, 4, 4, 6, 4, 2, 2
+        self.resolution = [5, 5, 4, 4, 6, 4, 2, 2]
+        self.codec_base = [0, 0, 0, 0, 0, 0, 0, 1]
+        dim_chk = self.resolution[-1]
+        for i in range(len(self.resolution)-2, -1, -1): # reversed order
+            self.codec_base[i] = self.codec_base[i+1] * self.resolution[i+1]
+            dim_chk *= self.resolution[i]
+        assert dim_chk == sta_dim, "resolution not match dimension"
+        super().__init__(sta_dim, act_dim, goal)
+
+    def _state2index(self, s): # translate state "s" s[0-7] to ga index
+        sd = [0 for _ in range(len(s))]
+        sd[0] = (s[0] + 1.) // (2. / self.resolution[0]) # s[0] {-1.0 ~ 1.0}
+        sd[1] = (s[1] + 1.) // (12. / self.resolution[1]) # s[1] {0.0 ~ 2.0}
+        sd[2] = (s[2] + 4.) // (8. / self.resolution[2]) # s[2] {-1.0 ~ 1.0}
+        sd[3] = (s[3] + 5.) // (10. / self.resolution[3]) # s[3] {-1.0 ~ 1.0}
+        sd[4] = (s[4] + 20.) // (40. / self.resolution[4]) # s[4] {-1.0 ~ 1.0}
+        sd[5] = (s[5] + 8.) // (16. / self.resolution[5]) # s[5] {-1.0 ~ 1.0}
+        sd[6], sd[7] = int(s[6]), int(s[7]) # s[6], s[7] { 0.0 / 1.0 }
+
+        for i in range(len(sd)):
+            assert sd[i] >= 0 and sd[i] < self.resolution[i], f"cannot encode val[{i}]={s[i]}"
+
+        s_int = 0
+        for i in range(len(sd)):
+            s_int += sd[i] * self.codec_base[i]
+        return int(s_int)        
+
+    def _index2state(self, idx):
+        pass
+
+    def ga_solution(self, env, s, sol):
+        idx = self._state2index(s)
+        return sol[idx]
+
+    def fit_func(self, sol, render=False):
+        assert len(sol) == self.dim, "wrong dimension solution node!"
+        self.lander.seed(None)
+        total_reward = 0; steps = 0
+        s = self.lander.reset()
+        while True:
+            a = self.ga_solution(self.lander, s, sol)
+            s, r, done, info = self.lander.step(a)
+            total_reward += r
+
+            if render:
+                still_open = self.lander.render()
+                if still_open == False: break
+
+            # if steps % 20 == 0 or done:
+            #     print("observations:", " ".join(["{:+0.2f}".format(x) for x in s]))
+            #     print("step {} total_reward {:+0.2f}".format(steps, total_reward))
+            steps += 1
+            if done: break
+        return total_reward
+
 
 if __name__ == '__main__':
     demo_heuristic_lander(LunarLander(), render=True)
