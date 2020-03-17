@@ -35,31 +35,19 @@ class genetic_agent:
         test = np.argmax(fit_score >= self.goal)
         self.scores.append(fit_score.max())
         if test: return self.arr[test]
-
-        # # create lottery poll for selection
-        # lottery_poll = []
-        # for i, s in enumerate(fit_score): 
-        #     lottery_poll.extend([i for j in range(s)])
-        # # select nodes to a new population based on probabilities
-        # new_arr = np.zeros(self.arr.shape)
-        # for i in range(self.size):
-        #     if len(lottery_poll):
-        #         dice = np.random.randint(0, len(lottery_poll))
-        #         new_arr[i,:] = self.arr[lottery_poll[dice],:]
-        #     else:
-        #         new_arr[i,:] = self.arr[0,:]
-        # self.arr[:,:] = new_arr[:,:]
-
-        # select nodes to a new population based on fitness
-        top_n = self.size // 2 # TODO: better citizen didn't get more breed chance
-        top_n = top_n + 1 if top_n % 2 else top_n
-        order = np.argsort(fit_score)
+        fit_score = ((fit_score - fit_score.min()) // 10).astype(np.int)
+        # create lottery poll for selection
+        lottery_poll = []
+        for i, s in enumerate(fit_score): 
+            lottery_poll.extend([i for j in range(s)])
+        # select nodes to a new population based on probabilities
         new_arr = np.zeros(self.arr.shape)
-        for i, p in enumerate(reversed(order)):
-            new_arr[i,:] = self.arr[p,:]
-            if i >= top_n: break
-        new_arr[top_n:,:] = new_arr[:top_n,:]
-        np.random.shuffle(new_arr)
+        for i in range(self.size):
+            if len(lottery_poll):
+                dice = np.random.randint(0, len(lottery_poll))
+                new_arr[i,:] = self.arr[lottery_poll[dice],:]
+            else:
+                new_arr[i,:] = self.arr[0,:]
         self.arr[:,:] = new_arr[:,:]
         # cross-over
         assert self.size % 2 == 0, "population size needs to be even"
