@@ -414,6 +414,7 @@ def demo_heuristic_lander(env, seed=None, render=False):
     return total_reward
 
 from ga_problem import ga_problems
+import math
 
 class ga_lunar_lander_problem(ga_problems):
     def __init__(self, sta_dim, act_dim, goal):
@@ -428,17 +429,27 @@ class ga_lunar_lander_problem(ga_problems):
         assert dim_chk == sta_dim, "resolution not match dimension"
         super().__init__(sta_dim, act_dim, goal)
 
+    def _map_non_linear(self, sta, resolution):
+        sta_d = 0 if sta == 0 else (resolution/2 - 0.5/math.sqrt(abs(sta)))
+        sta_d = 0 if sta_d < 0 else sta_d
+        sta_d = resolution/2 + (sta_d if sta >= 0 else -sta_d)
+        sta_d = int(sta_d + (resolution/2 - resolution//2))
+        sta_d = (sta_d - 1) if sta_d >= resolution else sta_d
+        return sta_d
+
     def _state2index(self, s): # translate state "s" s[0-7] to ga index
         sd = [0 for _ in range(len(s))]
-        sd[0] = (s[0] + 1.) // (2. / self.resolution[0]) # s[0] {-1.0 ~ 1.0}
-        sd[1] = (s[1] + 1.) // (12. / self.resolution[1]) # s[1] {0.0 ~ 2.0}
-        sd[2] = (s[2] + 4.) // (8. / self.resolution[2]) # s[2] {-1.0 ~ 1.0}
-        sd[3] = (s[3] + 5.) // (10. / self.resolution[3]) # s[3] {-1.0 ~ 1.0}
-        sd[4] = (s[4] + 20.) // (40. / self.resolution[4]) # s[4] {-1.0 ~ 1.0}
-        sd[5] = (s[5] + 8.) // (16. / self.resolution[5]) # s[5] {-1.0 ~ 1.0}
-        sd[6], sd[7] = int(s[6]), int(s[7]) # s[6], s[7] { 0.0 / 1.0 }
+        # sd[0] = (s[0] + 1.) // (2. / self.resolution[0]) # s[0] {-1.0 ~ 1.0}
+        # sd[1] = (s[1] + 1.) // (12. / self.resolution[1]) # s[1] {-0.6 ~ 1.5}
+        # sd[2] = (s[2] + 4.) // (8. / self.resolution[2]) # s[2] {-1.0 ~ 1.0}
+        # sd[3] = (s[3] + 5.) // (10. / self.resolution[3]) # s[3] {-1.0 ~ 1.0}
+        # sd[4] = (s[4] + 20.) // (40. / self.resolution[4]) # s[4] {-1.0 ~ 1.0}
+        # sd[5] = (s[5] + 8.) // (16. / self.resolution[5]) # s[5] {-1.0 ~ 1.0}
+        # sd[6], sd[7] = int(s[6]), int(s[7]) # s[6], s[7] { 0.0 / 1.0 }
 
         for i in range(len(sd)):
+            if i < 6: sd[i] = self._map_non_linear(s[i], self.resolution[i])
+            else: sd[i] = int(s[i])
             assert sd[i] >= 0 and sd[i] < self.resolution[i], f"cannot encode val[{i}]={s[i]}"
 
         s_int = 0
@@ -471,7 +482,8 @@ class ga_lunar_lander_problem(ga_problems):
             #     print("observations:", " ".join(["{:+0.2f}".format(x) for x in s]))
             #     print("step {} total_reward {:+0.2f}".format(steps, total_reward))
             steps += 1
-            if done: break
+            if done or steps > 500: break
+        if render: print(f"step = {steps}, reward = {total_reward}")
         return total_reward
 
 
