@@ -13,7 +13,7 @@ class genetic_agent:
         self.act_dim = problem.act_dim
         self.arr = np.zeros((size, self.dim), dtype=np.int)
         for i in range(size): # a random population
-            self.arr[i,:] = np.random.choice(problem.act_dim, self.dim)
+            self.arr[i,:] = np.random.choice(self.act_dim, self.dim)
         self.fit_func = problem.fit_func # fitness function
         self.mutp = mut_pct; self.niter = num_iter
         self.scores = [] # to track the scores
@@ -50,7 +50,7 @@ class genetic_agent:
             # dice = np.random.rand() <= self.mutp
             # if not dice: continue # lucky, no mutation
             prob = np.random.binomial(1, self.mutp, self.dim) # create distribution based on mutp
-            mut_arr = np.random.choice(problem.act_dim, self.dim) # prepare a random array for mutation
+            mut_arr = np.random.choice(self.act_dim, self.dim) # prepare a random array for mutation
             self.arr[i,:] = np.where(prob == 1, mut_arr, self.arr[i,:]) # mutate the actions where prob == 1
         return []
 
