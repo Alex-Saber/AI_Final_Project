@@ -68,28 +68,3 @@ class genetic_agent:
                 last_p = p
         print("")
         return the_i, the_sol, the_max
-
-    
-if __name__ == '__main__':
-    PopulationSize = [60, 150, 500, 800]
-    MutationPct = [0.1, 0.2, 0.4]
-    NumIterations = [800, 1200, 2000]
-    # PopulationSize = [400, 800]
-    # MutationPct = [0.2]
-    # NumIterations = [800, 1000]
-
-    # for lunar lander
-    problem = ga_lunar_lander_problem(38400, 4, 300) # string length (state space), action range, target score (total rewards)
-    for psz in PopulationSize:
-        for mpt in MutationPct:
-            for nit in NumIterations:
-                print("==== population_size [{0}], mutation_pct [{1}], num_iters [{2}]".format(psz, mpt, nit))
-                agent = genetic_agent(problem, psz, mpt, nit)
-                print(agent.arr[0])
-                idx, sol = agent.evolve()
-                print("    scores = {0}".format(max(agent.scores)))
-                if idx:
-                    print("    at iter [{0}] found solution {1}".format(idx, sol))
-                    plt.plot(agent.scores)
-                    plt.show()
-                    problem.fit_func(sol, True)

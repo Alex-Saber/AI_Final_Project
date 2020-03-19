@@ -470,7 +470,7 @@ class ga_lunar_lander_problem(ga_problems):
 
     def fit_func(self, sol, render=False): # calculate the score for one solution candidate (one citizen)
         assert len(sol) == self.dim, "wrong dimension solution node!"
-        self.lander.seed(55)
+        self.lander.seed(23)
         total_reward = 0; steps = 0
         s = self.lander.reset()
         while True:
@@ -494,6 +494,34 @@ class ga_lunar_lander_problem(ga_problems):
 
 
 if __name__ == '__main__':
-    demo_heuristic_lander(LunarLander(), 55, render=True)
-    
+    # demo_heuristic_lander(LunarLander(), 23, render=True)
+
+    import ga
+    import matplotlib.pyplot as plt
+
+    PopulationSize = [40, 80, 120]
+    MutationPct = [0.1, 0.2]
+    NumIterations = [60, 100, 200] # , 1200, 2000]
+
+    # for mountain car
+    problem = ga_lunar_lander_problem(38400, 4, 300)  # string length (state space), action range, target score (total rewards)
+    for psz in PopulationSize:
+        for mpt in MutationPct:
+            for nit in NumIterations:
+                print("==== population_size [{0}], mutation_pct [{1}], num_iters [{2}]".format(psz, mpt, nit))
+                agent = ga.genetic_agent(problem, psz, mpt, nit)
+                print(agent.arr[0])
+                idx, sol, score = agent.evolve()
+                print(f"max score this time = {score}")
+                print(f"solution this time = {sol}")
+                plt.clf()
+                plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
+                plt.ylabel("Scores")
+                plt.xlabel("Generations")
+                plt.plot(agent.scores)
+                plt.savefig(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.png") # plot to png file
+                # plt.show()
+                if score >= problem.goal:
+                    print("    at iter [{0}] found solution {1}".format(idx, sol))
+                    problem.fit_func(sol, True)
     

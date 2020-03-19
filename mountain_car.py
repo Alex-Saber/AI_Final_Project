@@ -239,6 +239,7 @@ if __name__ == "__main__":
                 print(agent.arr[0])
                 idx, sol, score = agent.evolve()
                 print(f"max score this time = {score}")
+                print(f"solution this time = {sol}")
                 plt.clf()
                 plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
                 plt.ylabel("Scores")
