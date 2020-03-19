@@ -217,6 +217,7 @@ class ga_mountain_car_problem(ga_problems):
 if __name__ == "__main__":
 
     import random
+    import matplotlib.pyplot as plt
 
     # car.reset()
     # for iteration in range(0, 300):
@@ -240,6 +241,10 @@ if __name__ == "__main__":
                 print("    scores = {0}".format(max(agent.scores)))
                 if idx:
                     print("    at iter [{0}] found solution {1}".format(idx, sol))
-                    # plt.plot(agent.scores)
+                    plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
+                    plt.ylabel("Scores")
+                    plt.xlabel("Generations")
+                    plt.plot(agent.scores)
+                    plt.savefig(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.png") # plot to png file
                     # plt.show()
                     problem.fit_func(sol, True)
