@@ -1,15 +1,4 @@
-# -*- coding: utf-8 -*-
 """
-@author: Olivier Sigaud
-
-A merge between two sources:
-
-* Adaptation of the MountainCar Environment from the "FAReinforcement" library
-of Jose Antonio Martin H. (version 1.0), adapted by  'Tom Schaul, tom@idsia.ch'
-and then modified by Arnaud de Broissia
-
-* the OpenAI/gym MountainCar environment
-itself from
 http://incompleteideas.net/sutton/MountainCar/MountainCar1.cp
 permalink: https://perma.cc/6Z2N-PFWC
 """
@@ -23,69 +12,55 @@ from gym import spaces
 from gym.utils import seeding
 
 
-class Continuous_MountainCarEnv(gym.Env):
+class MountainCarEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
     }
 
     def __init__(self, goal_velocity=0):
-        self.min_action = -1.0
-        self.max_action = 1.0
         self.min_position = -1.2
         self.max_position = 0.6
         self.max_speed = 0.07
-        self.goal_position = 0.45  # was 0.5 in gym, 0.45 in Arnaud de Broissia's version
+        self.goal_position = 0.5
         self.goal_velocity = goal_velocity
-        self.power = 0.0015
 
-        self.low_state = np.array([self.min_position, -self.max_speed])
-        self.high_state = np.array([self.max_position, self.max_speed])
+        self.force = 0.001
+        self.gravity = 0.0025
+
+        self.low = np.array([self.min_position, -self.max_speed], dtype=np.float32)
+        self.high = np.array([self.max_position, self.max_speed], dtype=np.float32)
 
         self.viewer = None
 
-        self.action_space = spaces.Box(low=self.min_action, high=self.max_action,
-                                       shape=(1,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=self.low_state, high=self.high_state,
-                                            dtype=np.float32)
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(self.low, self.high, dtype=np.float32)
 
         self.seed()
-        self.reset()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def step(self, action):
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        position = self.state[0]
-        velocity = self.state[1]
-        force = action
-
-        velocity += force * self.power - 0.0025 * math.cos(3 * position)
-        if (velocity > self.max_speed): velocity = self.max_speed
-        if (velocity < -self.max_speed): velocity = -self.max_speed
+        position, velocity = self.state
+        velocity += (action - 1) * self.force + math.cos(3 * position) * (-self.gravity)
+        velocity = np.clip(velocity, -self.max_speed, self.max_speed)
         position += velocity
-        if (position > self.max_position): position = self.max_position
-        if (position < self.min_position): position = self.min_position
+        position = np.clip(position, self.min_position, self.max_position)
         if (position == self.min_position and velocity < 0): velocity = 0
 
         done = bool(position >= self.goal_position and velocity >= self.goal_velocity)
+        reward = -1.0
 
-        reward = 0
-        if done:
-            reward = 100.0
-        reward -= math.pow(action, 2) * 0.1
-
-        self.state = np.array([position, velocity])
-        return self.state, reward, done, {}
+        self.state = (position, velocity)
+        return np.array(self.state), reward, done, {}
 
     def reset(self):
         self.state = np.array([self.np_random.uniform(low=-0.6, high=-0.4), 0])
         return np.array(self.state)
-
-    #    def get_state(self):
-    #        return self.state
 
     def _height(self, xs):
         return np.sin(3 * xs) * .45 + .55
@@ -143,6 +118,9 @@ class Continuous_MountainCarEnv(gym.Env):
 
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
+    def get_keys_to_action(self):
+        return {(): 1, (276,): 0, (275,): 2, (275, 276): 1}  # control with left and right arrow keys
+
     def close(self):
         if self.viewer:
             self.viewer.close()
@@ -150,10 +128,10 @@ class Continuous_MountainCarEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    car = Continuous_MountainCarEnv()
+    car = MountainCarEnv()
 
     import random
 
     for i in range(0, 300):
-        car.step(random.randint(-1, 1))
+        car.step(random.randint(0, 2))
         car.render()
