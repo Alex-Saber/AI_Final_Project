@@ -466,7 +466,7 @@ class ga_lunar_lander_problem(ga_problems):
 
     def fit_func(self, sol, render=False):
         assert len(sol) == self.dim, "wrong dimension solution node!"
-        self.lander.seed(None)
+        self.lander.seed(55)
         total_reward = 0; steps = 0
         s = self.lander.reset()
         while True:
@@ -483,11 +483,13 @@ class ga_lunar_lander_problem(ga_problems):
             #     print("step {} total_reward {:+0.2f}".format(steps, total_reward))
             steps += 1
             if done or steps > 500: break
-        if render: print(f"step = {steps}, reward = {total_reward}")
+        if render: 
+            self.lander.close()
+            print(f"step = {steps}, reward = {total_reward}")
         return total_reward
 
 
 if __name__ == '__main__':
-    demo_heuristic_lander(LunarLander(), render=True)
+    demo_heuristic_lander(LunarLander(), 55, render=True)
     
     

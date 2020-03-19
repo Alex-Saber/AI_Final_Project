@@ -7,18 +7,6 @@ import matplotlib.pyplot as plt
 from ga_problem import ga_problems
 from lunar_lander import ga_lunar_lander_problem
 
-class eight_queen(ga_problems):
-    def fit_func(self, sol):
-        assert len(sol) == self.dim, "wrong dimension solution node!"
-        score = 0 # pair-wise non-attacking queens, max = 8*7/2
-        for i in range(self.dim):
-            for j in range(i+1, self.dim):
-                ri, rj = sol[i] // self.dim, sol[j] // self.dim
-                ci, cj = sol[i] % self.dim, sol[j] % self.dim
-                d_attack = abs(ri - rj) == abs(ci - cj) # diagnal attack
-                score += 0 if (ri==rj or ci==cj or d_attack) else 1 
-        return score # mutual attacking score 2x->x
-
 class genetic_agent:
     def __init__(self, problem, size, mut_pct, num_iter):
         self.size = size; self.dim = problem.dim; self.goal = problem.goal
@@ -57,12 +45,11 @@ class genetic_agent:
             self.arr[i*2+1,dice:] = new_arr[i*2, dice:]
         # mutation
         for i in range(self.size):
-            dice = np.random.rand() <= self.mutp
-            if not dice: continue # lucky, no mutation
-            dice1 = np.random.randint(0, self.dim)
-            dice2 = np.random.randint(0, self.act_dim)
-            n, k = dice2, (dice2+1)%self.act_dim
-            self.arr[i,dice1] = k if self.arr[i,dice1] == n else n
+            # dice = np.random.rand() <= self.mutp
+            # if not dice: continue # lucky, no mutation
+            prob = np.random.binomial(1, self.mutp, self.dim)
+            mut_arr = np.random.choice(problem.act_dim, self.dim)
+            self.arr[i,:] = np.where(prob == 1, mut_arr, self.arr[i,:])
         return []
 
     def evolve(self):
@@ -72,7 +59,7 @@ class genetic_agent:
             if len(result): return i, result
             p = i*100//self.niter
             if p != last_p:
-                if p % 10 == 0: print(f"{p}", end='')
+                if p % 10 == 0: print(f"{p}({max(self.scores):.1f})", end='')
                 else: print(".", end='')
                 last_p = p
         print("")
@@ -80,16 +67,15 @@ class genetic_agent:
 
     
 if __name__ == '__main__':
-    PopulationSize = [12, 20, 150, 500, 800]
-    MutationPct = [0.4, 0.5, 0.9]
-    NumIterations = [200, 800]
-    # PopulationSize = [100, 1000]
-    # MutationPct = [0.5]
-    # NumIterations = [200, 1000]
-    dim = 8
-    #problem = eight_queen(dim, dim**2, (dim-1)*dim//2)
+    PopulationSize = [60, 150, 500, 800]
+    MutationPct = [0.1, 0.2, 0.4]
+    NumIterations = [800, 1200, 2000]
+    # PopulationSize = [400, 800]
+    # MutationPct = [0.2]
+    # NumIterations = [800, 1000]
+
     # for lunar lander
-    problem = ga_lunar_lander_problem(38400, 4, 250) # string length (state space), action range, target score (total rewards)
+    problem = ga_lunar_lander_problem(38400, 4, 300) # string length (state space), action range, target score (total rewards)
     for psz in PopulationSize:
         for mpt in MutationPct:
             for nit in NumIterations:
@@ -100,7 +86,6 @@ if __name__ == '__main__':
                 print("    scores = {0}".format(max(agent.scores)))
                 if idx:
                     print("    at iter [{0}] found solution {1}".format(idx, sol))
-                    print("    scores = {0}".format(agent.scores))
                     plt.plot(agent.scores)
                     plt.show()
                     problem.fit_func(sol, True)
