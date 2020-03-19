@@ -132,6 +132,7 @@ if __name__ == "__main__":
 
     import random
 
+    car.reset()
     for i in range(0, 300):
         car.step(random.randint(0, 2))
         car.render()
