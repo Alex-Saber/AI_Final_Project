@@ -25,7 +25,8 @@ class genetic_agent:
         self.scores.append(fit_score.max())
         if test: return self.arr[test] # return if goal got hit
         # normalize the score into range (0 - max_score // 10) for lunar lander max_score ~ 300
-        fit_score = ((fit_score - fit_score.min()) // 10).astype(np.int)
+        mn, mx = fit_score.min(), fit_score.max()
+        fit_score = ((fit_score - mn) * 100 / (mx - mn)).astype(np.int)
         # create lottery poll for selection
         lottery_poll = []
         for i, s in enumerate(fit_score): 
