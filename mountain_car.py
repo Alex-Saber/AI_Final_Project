@@ -27,6 +27,9 @@ class MountainCarEnv(gym.Env):
 
         self.closest_reach = -1.2
 
+        self.lowest_point = 1.0
+        self.prev_velocity = 0.0
+
         self.force = 0.001
         self.gravity = 0.0025
 
@@ -56,11 +59,24 @@ class MountainCarEnv(gym.Env):
 
         done = bool(position >= self.goal_position and velocity >= self.goal_velocity)
 
-        if position > self.closest_reach:
-            reward = +1.0
-            self.closest_reach = position
-        else:
-            reward = 0
+        reward = 0
+
+        if position == -1.2:
+            if abs(velocity) - abs(self.prev_velocity) > 0.0001:
+                reward += +1.0
+
+            # print("reached")
+
+            self.prev_velocity = velocity
+
+        if position > 0.4 or position < -1.0:
+            if position > self.closest_reach:
+                reward += 1
+                self.closest_reach = position
+
+        # if position < self.lowest_point:
+        #     self.lowest_point = position
+        #     print(position)
 
         self.state = (position, velocity)
         return np.array(self.state), reward, done, {}
@@ -68,6 +84,8 @@ class MountainCarEnv(gym.Env):
     def reset(self):
         self.state = np.array([self.np_random.uniform(low=-0.6, high=-0.4), 0])
         self.closest_reach = -1.2
+        self.lowest_point = 1
+        self.prev_velocity = 0
         return np.array(self.state)
 
     def _height(self, xs):
@@ -211,7 +229,7 @@ if __name__ == "__main__":
     NumIterations = [30, 50, 70] # , 1200, 2000]
 
     # for mountain car
-    problem = ga_mountain_car_problem(285, 3, 150)  # string length (state space), action range, target score (total rewards)
+    problem = ga_mountain_car_problem(285, 3, 100)  # string length (state space), action range, target score (total rewards)
     for psz in PopulationSize:
         for mpt in MutationPct:
             for nit in NumIterations:
