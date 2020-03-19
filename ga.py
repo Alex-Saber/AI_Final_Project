@@ -23,7 +23,7 @@ class genetic_agent:
         fit_score = np.apply_along_axis(self.fit_func, 1, self.arr)
         test = np.argmax(fit_score >= self.goal)
         self.scores.append(fit_score.max())
-        if test: return self.arr[test] # return if goal got hit
+        best = (np.copy(self.arr[test]), self.scores[-1])
         # normalize the score into range (0 - 100)
         mn, mx = fit_score.min(), fit_score.max()
         fit_score = [0] if mx == mn else ((fit_score - mn) * 100 / (mx - mn)).astype(np.int)
@@ -53,20 +53,21 @@ class genetic_agent:
             prob = np.random.binomial(1, self.mutp, self.dim) # create distribution based on mutp
             mut_arr = np.random.choice(self.act_dim, self.dim) # prepare a random array for mutation
             self.arr[i,:] = np.where(prob == 1, mut_arr, self.arr[i,:]) # mutate the actions where prob == 1
-        return []
+        return best
 
     def evolve(self):
         last_p = 0
+        the_sol, the_i, the_max = None, 0, -np.inf
         for i in range(self.niter):
-            result = self.next_gen() # the only real work
-            if len(result): return i, result
+            sol, score = self.next_gen() # the only real work
+            if score > the_max: the_sol, the_i, the_max = sol, i, score
             p = i*100//self.niter
             if p != last_p:
-                if p % 10 == 0: print(f"{p}({max(self.scores):.1f})", end='')
+                if p % 10 == 0: print(f"{p}pct({max(self.scores):.1f})", end='')
                 else: print(".", end='')
                 last_p = p
         print("")
-        return None, None
+        return the_i, the_sol, the_max
 
     
 if __name__ == '__main__':

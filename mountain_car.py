@@ -237,14 +237,15 @@ if __name__ == "__main__":
                 print("==== population_size [{0}], mutation_pct [{1}], num_iters [{2}]".format(psz, mpt, nit))
                 agent = ga.genetic_agent(problem, psz, mpt, nit)
                 print(agent.arr[0])
-                idx, sol = agent.evolve()
-                print("    scores = {0}".format(max(agent.scores)))
-                if idx:
+                idx, sol, score = agent.evolve()
+                print(f"max score this time = {score}")
+                plt.clf()
+                plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
+                plt.ylabel("Scores")
+                plt.xlabel("Generations")
+                plt.plot(agent.scores)
+                plt.savefig(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.png") # plot to png file
+                # plt.show()
+                if score >= problem.goal:
                     print("    at iter [{0}] found solution {1}".format(idx, sol))
-                    plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
-                    plt.ylabel("Scores")
-                    plt.xlabel("Generations")
-                    plt.plot(agent.scores)
-                    plt.savefig(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.png") # plot to png file
-                    # plt.show()
                     problem.fit_func(sol, True)
