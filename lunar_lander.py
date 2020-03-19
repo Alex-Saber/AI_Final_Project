@@ -413,6 +413,10 @@ def demo_heuristic_lander(env, seed=None, render=False):
         if done: break
     return total_reward
 
+''' Below are code we create a Genetic problem inherit from "ga_problem"
+    the interface of "ga_problem" make it easy to plug in the "genetic_agent"
+    refer to "ga_problems" class for interface signatures
+'''
 from ga_problem import ga_problems
 import math
 
@@ -421,7 +425,7 @@ class ga_lunar_lander_problem(ga_problems):
         self.lander = LunarLander()
         # states division: 5, 5, 4, 4, 6, 4, 2, 2
         self.resolution = [5, 5, 4, 4, 6, 4, 2, 2]
-        self.codec_base = [0, 0, 0, 0, 0, 0, 0, 1]
+        self.codec_base = [0, 0, 0, 0, 0, 0, 0, 1] # for later translation 'states <-> index'
         dim_chk = self.resolution[-1]
         for i in range(len(self.resolution)-2, -1, -1): # reversed order
             self.codec_base[i] = self.codec_base[i+1] * self.resolution[i+1]
@@ -430,11 +434,11 @@ class ga_lunar_lander_problem(ga_problems):
         super().__init__(sta_dim, act_dim, goal)
 
     def _map_non_linear(self, sta, resolution):
-        sta_d = 0 if sta == 0 else (resolution/2 - 0.5/math.sqrt(abs(sta)))
-        sta_d = 0 if sta_d < 0 else sta_d
-        sta_d = resolution/2 + (sta_d if sta >= 0 else -sta_d)
-        sta_d = int(sta_d + (resolution/2 - resolution//2))
-        sta_d = (sta_d - 1) if sta_d >= resolution else sta_d
+        sta_d = 0 if sta == 0 else (resolution/2 - 0.5/math.sqrt(abs(sta))) # '0' will cause divide by zero exception
+        sta_d = 0 if sta_d < 0 else sta_d # use the equation mapping above '0' part only
+        sta_d = resolution/2 + (sta_d if sta >= 0 else -sta_d) # lift up the result to > 0 (e.g. -1.0~1.0 to 0.0 to 2.0)
+        sta_d = int(sta_d + (resolution/2 - resolution//2)) # handle the digits after dot (e.g. resolution = 5, 0.5 to handle)
+        sta_d = (sta_d - 1) if sta_d >= resolution else sta_d # cap the over-boundary part to be max value
         return sta_d
 
     def _state2index(self, s): # translate state "s" s[0-7] to ga index
@@ -452,19 +456,19 @@ class ga_lunar_lander_problem(ga_problems):
             else: sd[i] = int(s[i])
             assert sd[i] >= 0 and sd[i] < self.resolution[i], f"cannot encode val[{i}]={s[i]}"
 
-        s_int = 0
+        s_int = 0 # translate from digitized state sequence to genetic string index
         for i in range(len(sd)):
             s_int += sd[i] * self.codec_base[i]
         return int(s_int)        
 
     def _index2state(self, idx):
-        pass
+        pass # implement when you need it
 
     def ga_solution(self, env, s, sol):
-        idx = self._state2index(s)
-        return sol[idx]
+        idx = self._state2index(s) # translate from state to index
+        return sol[idx] # get action based on genetic string citizen
 
-    def fit_func(self, sol, render=False):
+    def fit_func(self, sol, render=False): # calculate the score for one solution candidate (one citizen)
         assert len(sol) == self.dim, "wrong dimension solution node!"
         self.lander.seed(55)
         total_reward = 0; steps = 0
