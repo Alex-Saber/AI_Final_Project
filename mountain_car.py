@@ -225,12 +225,12 @@ if __name__ == "__main__":
     #     print(car.state)
     #     car.render()
 
-    PopulationSize = [10, 20, 30]
-    MutationPct = [0.1, 0.2]
-    NumIterations = [1000, 600, 100]
+    PopulationSize = [10, 20, 40]
+    MutationPct = [0.1, 0.2, 0.5]
+    NumIterations = [70, 140, 280]
 
     # for mountain car
-    problem = ga_mountain_car_problem(285, 3, 100)  # string length (state space), action range, target score (total rewards)
+    problem = ga_mountain_car_problem(285, 3, 200)  # string length (state space), action range, target score (total rewards)
     for psz in PopulationSize:
         for mpt in MutationPct:
             for nit in NumIterations:
