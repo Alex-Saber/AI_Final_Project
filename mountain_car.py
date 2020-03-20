@@ -240,6 +240,7 @@ if __name__ == "__main__":
                 idx, sol, score = agent.evolve()
                 print(f"max score this time = {score}")
                 print(f"solution this time = {sol}")
+                np.savetxt(f"solution_PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.txt", sol, fmt='%i')
                 plt.clf()
                 plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
                 plt.ylabel("Scores")

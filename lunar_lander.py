@@ -470,7 +470,7 @@ class ga_lunar_lander_problem(ga_problems):
 
     def fit_func(self, sol, render=False): # calculate the score for one solution candidate (one citizen)
         assert len(sol) == self.dim, "wrong dimension solution node!"
-        self.lander.seed(23)
+        self.lander.seed()
         total_reward = 0; steps = 0
         s = self.lander.reset()
         while True:
@@ -499,9 +499,9 @@ if __name__ == '__main__':
     import ga
     import matplotlib.pyplot as plt
 
-    PopulationSize = [40, 80, 120]
+    PopulationSize = [60, 80, 120]
     MutationPct = [0.1, 0.2]
-    NumIterations = [60, 100, 200] # , 1200, 2000]
+    NumIterations = [3000, 1600, 800] # , 1200, 2000]
 
     # for mountain car
     problem = ga_lunar_lander_problem(38400, 4, 300)  # string length (state space), action range, target score (total rewards)
@@ -514,6 +514,7 @@ if __name__ == '__main__':
                 idx, sol, score = agent.evolve()
                 print(f"max score this time = {score}")
                 print(f"solution this time = {sol}")
+                np.savetxt(f"solution_PopulationSize={psz},MutationPct={mpt},NumIterations={nit}.txt", sol, fmt='%i')
                 plt.clf()
                 plt.title(f"PopulationSize={psz},MutationPct={mpt},NumIterations={nit}")
                 plt.ylabel("Scores")
