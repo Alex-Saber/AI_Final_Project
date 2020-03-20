@@ -17,13 +17,14 @@ class genetic_agent:
         self.fit_func = problem.fit_func # fitness function
         self.mutp = mut_pct; self.niter = num_iter
         self.scores = [] # to track the scores
+        self.best = None
 
     def next_gen(self):
         # check the score, see if anyone hit the goal
         fit_score = np.apply_along_axis(self.fit_func, 1, self.arr)
         test = np.argmax(fit_score >= self.goal)
-        self.scores.append(fit_score.max())
-        best = (np.copy(self.arr[test]), self.scores[-1])
+        self.scores.append(fit_score.max()) # self.scores.append(np.mean(fit_score))
+        self.best = (np.copy(self.arr[test]), self.scores[-1])
         # normalize the score into range (0 - 100)
         mn, mx = fit_score.min(), fit_score.max()
         fit_score = [0] if mx == mn else ((fit_score - mn) * 100 / (mx - mn)).astype(np.int)
@@ -53,7 +54,8 @@ class genetic_agent:
             prob = np.random.binomial(1, self.mutp, self.dim) # create distribution based on mutp
             mut_arr = np.random.choice(self.act_dim, self.dim) # prepare a random array for mutation
             self.arr[i,:] = np.where(prob == 1, mut_arr, self.arr[i,:]) # mutate the actions where prob == 1
-        return best
+        self.arr[0,:] = self.best[0] # make sure pass the best citizen to next generation
+        return self.best
 
     def evolve(self):
         last_p = 0

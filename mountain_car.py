@@ -192,7 +192,7 @@ class ga_mountain_car_problem(ga_problems):
 
     def fit_func(self, sol, render=False): # calculate the score for one solution candidate (one citizen)
         assert len(sol) == self.dim, "wrong dimension solution node!"
-        self.car.seed(55)
+        self.car.seed()
         total_reward = 0; steps = 0
         s = self.car.reset()
         while True:
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
     PopulationSize = [10, 20, 30]
     MutationPct = [0.1, 0.2]
-    NumIterations = [30, 50, 70] # , 1200, 2000]
+    NumIterations = [1000, 600, 100]
 
     # for mountain car
     problem = ga_mountain_car_problem(285, 3, 100)  # string length (state space), action range, target score (total rewards)
