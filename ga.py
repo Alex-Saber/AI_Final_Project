@@ -22,25 +22,26 @@ class genetic_agent:
     def next_gen(self):
         # check the score, see if anyone hit the goal
         fit_score = np.apply_along_axis(self.fit_func, 1, self.arr)
-        test = np.argmax(fit_score >= self.goal)
+        mx_idx = np.argmax(fit_score)
         self.scores.append(fit_score.max()) # self.scores.append(np.mean(fit_score))
-        self.best = (np.copy(self.arr[test]), self.scores[-1])
+        self.best = (np.copy(self.arr[mx_idx]), self.scores[-1])
         # normalize the score into range (0 - 100)
         mn, mx = fit_score.min(), fit_score.max()
-        fit_score = [0] if mx == mn else ((fit_score - mn) * 100 / (mx - mn)).astype(np.int)
+        fit_score = [] if mx == mn else ((fit_score - mn) * 100 / (mx - mn)).astype(np.int)
         # create lottery poll for selection
         lottery_poll = []
         for i, s in enumerate(fit_score): 
             lottery_poll.extend([i for j in range(s)])
         # select nodes to a new population based on probabilities
         new_arr = np.zeros(self.arr.shape)
-        for i in range(self.size):
-            if len(lottery_poll): # we have a distribution pool
-                dice = np.random.randint(0, len(lottery_poll))
-                new_arr[i,:] = self.arr[lottery_poll[dice],:]
-            else: # only one choice left
-                new_arr[i,:] = self.arr[0,:]
-        self.arr[:,:] = new_arr[:,:]
+        if len(lottery_poll): # we have a distribution pool
+            if min(lottery_poll) == max(lottery_poll):
+                new_arr[:,:] = self.arr[min(lottery_poll),:]
+            else:
+                for i in range(self.size):
+                    dice = np.random.randint(0, len(lottery_poll))
+                    new_arr[i,:] = self.arr[lottery_poll[dice],:]
+            self.arr[:,:] = new_arr[:,:]
         # cross-over
         assert self.size % 2 == 0, "population size needs to be even"
         for i in range(self.size // 2):
