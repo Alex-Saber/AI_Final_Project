@@ -434,9 +434,10 @@ class ga_lunar_lander_problem(ga_problems):
         super().__init__(sta_dim, act_dim, goal)
 
     def _map_non_linear(self, sta, resolution):
-        sta_d = 0 if sta == 0 else (resolution/2 - 0.5/math.sqrt(abs(sta))) # '0' will cause divide by zero exception
-        sta_d = 0 if sta_d < 0 else sta_d # use the equation mapping above '0' part only
-        sta_d = resolution/2 + (sta_d if sta >= 0 else -sta_d) # lift up the result to > 0 (e.g. -1.0~1.0 to 0.0 to 2.0)
+        # sta_d = 0 if sta == 0 else (resolution/2 - 0.5/math.sqrt(abs(sta))) # '0' will cause divide by zero exception
+        # sta_d = 0 if sta_d < 0 else sta_d # use the equation mapping above '0' part only
+        # sta_d = resolution/2 + (sta_d if sta >= 0 else -sta_d) # lift up the result to > 0 (e.g. -1.0~1.0 to 0.0 to 2.0)
+        sta_d = resolution / (1 + math.e**(-resolution*sta))
         sta_d = int(sta_d + (resolution/2 - resolution//2)) # handle the digits after dot (e.g. resolution = 5, 0.5 to handle)
         sta_d = (sta_d - 1) if sta_d >= resolution else sta_d # cap the over-boundary part to be max value
         return sta_d
